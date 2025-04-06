@@ -1,25 +1,27 @@
-import requests
 from flask import Flask, request
+import requests
+import logging
+from datetime import datetime
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = '7559752691:AAHdzZZ0pXq2CacIRx7SSD79fFE1YliIQkw'
+BOT_TOKEN = '7559752691:AAHdzZZ0pXq2CacIRx7SSD79fFE1YliIQkw'
 CHAT_ID = '580021764'
 
-def send_telegram_message(text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': CHAT_ID,
-        'text': text
-    }
-    response = requests.post(url, data=payload)
-    return response.json()
+# Logger sozlamasi
+logging.basicConfig(filename='logs.txt', level=logging.INFO, format='%(asctime)s - %(message)s')
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/', methods=['POST'])
 def webhook():
-    data = request.data.decode('utf-8')
-    send_telegram_message(f"📈 Yangi Signal keldi:\n\n🔔 {data}")
-    return "✅ Signal yuborildi"
+    data = request.get_json()
+    message = data.get('message', '⚠️ Xabar topilmadi')
 
-if __name__ == '__main__':
-    app.run(port=5000)
+    # Telegramga yuborish
+    url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+    payload = {'chat_id': CHAT_ID, 'text': message}
+    requests.post(url, json=payload)
+
+    # Logga yozish
+    logging.info(f"Yuborilgan signal: {message}")
+
+    return 'OK', 200
